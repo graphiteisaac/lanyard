@@ -1,10 +1,12 @@
 import lanyard/internal
 
+// Default length of 21, as used by the original NanoID library
+const default_size = 21
+
+/// A small type to hold the generated ID, rather than relying on a string.
 pub type NanoID {
   NanoID(value: String)
 }
-
-const default_size = 21
 
 /// Generate a new NanoID using the default alphabet and length.
 /// The default alphabet is **A-Z** (capitals), **a-z** (lowercase),
