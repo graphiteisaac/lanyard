@@ -80,68 +80,8 @@ fn list_contains(list: List(String), target: String) -> Bool {
 
 fn string_length(bytes: BitArray, acc: Int) -> Int {
   case bytes {
-    <<_:utf8_codepoint, rest:bits>> -> string_length(rest, acc + 1)
+    <<_:size(8), rest:bits>> -> string_length(rest, acc + 1)
     _ -> acc
-  }
-}
-
-fn string_contains_char(haystack: String, char: String) -> Bool {
-  do_string_contains_char(<<haystack:utf8>>, <<char:utf8>>)
-}
-
-fn do_string_contains_char(haystack: BitArray, char: BitArray) -> Bool {
-  case haystack {
-    <<>> -> False
-    _ -> {
-      let hay_len = bit_array_length(haystack)
-      let char_len = bit_array_length(char)
-      case hay_len >= char_len {
-        False -> False
-        True -> {
-          case slice_bit_array(haystack, 0, char_len) == char {
-            True -> True
-            False -> do_string_contains_char(drop_first_byte(haystack), char)
-          }
-        }
-      }
-    }
-  }
-}
-
-fn bit_array_length(bits: BitArray) -> Int {
-  do_bit_array_length(bits, 0)
-}
-
-fn do_bit_array_length(bits: BitArray, acc: Int) -> Int {
-  case bits {
-    <<_, rest:bits>> -> do_bit_array_length(rest, acc + 1)
-    _ -> acc
-  }
-}
-
-fn slice_bit_array(bits: BitArray, from: Int, length: Int) -> BitArray {
-  do_slice_bit_array(bits, from, length, <<>>)
-}
-
-fn do_slice_bit_array(
-  bits: BitArray,
-  skip: Int,
-  remaining: Int,
-  acc: BitArray,
-) -> BitArray {
-  case skip, remaining, bits {
-    _, 0, _ -> acc
-    0, _, <<byte, rest:bits>> ->
-      do_slice_bit_array(rest, 0, remaining - 1, <<acc:bits, byte>>)
-    _, _, <<_, rest:bits>> -> do_slice_bit_array(rest, skip - 1, remaining, acc)
-    _, _, _ -> acc
-  }
-}
-
-fn drop_first_byte(bits: BitArray) -> BitArray {
-  case bits {
-    <<_, rest:bits>> -> rest
-    _ -> <<>>
   }
 }
 
@@ -152,18 +92,24 @@ fn only_uses_alphabet(id: String, alphabet: String) -> Bool {
 fn do_only_uses_alphabet(id: BitArray, alphabet: BitArray) -> Bool {
   case id {
     <<>> -> True
-    <<char:utf8_codepoint, rest:bits>> -> {
-      let char_bits = <<char:utf8_codepoint>>
-      case
-        string_contains_char(
-          <<alphabet:bits>> |> bit_array_to_string,
-          char_bits |> bit_array_to_string,
-        )
-      {
+    <<byte, rest:bits>> -> {
+      case bit_array_contains_byte(alphabet, byte) {
         True -> do_only_uses_alphabet(rest, alphabet)
         False -> False
       }
     }
+    _ -> False
+  }
+}
+
+fn bit_array_contains_byte(haystack: BitArray, target: Int) -> Bool {
+  case haystack {
+    <<>> -> False
+    <<byte, rest:bits>> ->
+      case byte == target {
+        True -> True
+        False -> bit_array_contains_byte(rest, target)
+      }
     _ -> False
   }
 }
