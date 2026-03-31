@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: extract
+        run: |
+          # Strip the leading 'v' from the tag
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check gleam.toml version matches tag
+        run: |
+          TOML_VERSION=$(grep '^version' gleam.toml | sed 's/version = "\(.*\)"/\1/')
+          if [ "$TOML_VERSION" != "${{ steps.extract.outputs.version }}" ]; then
+            echo "❌ gleam.toml version '$TOML_VERSION' does not match tag '${{ steps.extract.outputs.version }}'"
+            exit 1
+          fi
+          echo "✅ gleam.toml version matches"
+
+      - name: Check README version matches tag major
+        run: |
+          TAG_VERSION="${{ steps.extract.outputs.version }}"
+          MAJOR=$(echo "$TAG_VERSION" | cut -d. -f1)
+
+          # Looks for a line like: lanyard = ">= 1.0.0 and < 2.0.0"
+          README_MAJOR=$(grep -oP 'add lanyard@\K[0-9]+' README.md)
+
+          if [ -z "$README_MAJOR" ]; then
+            echo "❌ Could not find lanyard install string in README.md"
+            exit 1
+          fi
+
+          if [ "$README_MAJOR" != "$MAJOR" ]; then
+            echo "❌ README major version '$README_MAJOR' does not match tag major '$MAJOR'"
+            exit 1
+          fi
+          echo "✅ README version matches"
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+          gleam-version: 'latest'
+
+      - name: Publish to Hex
+        run: gleam publish --yes
+        env:
+          HEXPM_API_KEY: ${{ secrets.HEX_API_KEY }}
