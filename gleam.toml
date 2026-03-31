@@ -1,0 +1,12 @@
+name = "lanyard"
+version = "1.0.0"
+
+description = "Generate NanoIDs with Gleam, anywhere you can run Gleam!"
+licences = ["Apache-2.0"]
+repository = { type = "github", user = "graphiteIsaac", repo = "landyard" }
+links = [{ title = "Sponsor", href = "https://github.com/sponsors/graphiteisaac" }]
+
+[dependencies]
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
