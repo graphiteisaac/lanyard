@@ -11,9 +11,9 @@ Should work (and has been tested on) Erlang, JS in the browser, NodeJS 11+, Bun,
 gleam add lanyard@1
 ```
 ```gleam
-import lanyard
+import lanyard.{NanoID}
 
-pub fn main() -> Nil {
+pub fn main() {
     let NanoID(my_new_id) = lanyard.new()
     echo my_new_id // A default, 21 character long NanoID
 
@@ -27,6 +27,5 @@ Further documentation can be found at <https://hexdocs.pm/lanyard>.
 ## Development
 
 ```sh
-gleam run   # Run the project
 gleam test  # Run the tests
 ```
