@@ -6,17 +6,32 @@ pub type NanoID {
 
 const default_size = 21
 
-// Generate a new NanoID using the default alphabet
+/// Generate a new NanoID using the default alphabet and length.
+/// The default alphabet is **A-Z** (capitals), **a-z** (lowercase),
+/// **0-9**, and both **-** and **_**. The default length is **21**
 pub fn new() -> NanoID {
   internal.do_random_bytes(default_size)
   |> bytes_to_id(default_size, "")
 }
 
+/// Generate a new NanoID using the default alphabet, but a custom length.
+/// The default alphabet is **A-Z** (capitals), **a-z** (lowercase),
+/// **0-9**, and both **-** and **_**.
+///
+/// If a negative length is provided, this will return a blank ID.
 pub fn custom_length(size: Int) -> NanoID {
-  internal.do_random_bytes(size)
-  |> bytes_to_id(size, "")
+  case size < 1 {
+    True -> NanoID("")
+    False ->
+      internal.do_random_bytes(size)
+      |> bytes_to_id(size, "")
+  }
 }
 
+// This may look silly, but I'm standing by it, because it's quite 
+// performant and avoids using a dict (requires stdlib) and any sort 
+// of manual list indexing. The perf impact would be absolutely 
+// negligable, but I smiled when I thought of this, I smiled.
 fn default_alphabet(idx: Int) {
   case idx {
     0 -> "A"
@@ -89,6 +104,8 @@ fn default_alphabet(idx: Int) {
   }
 }
 
+// Turn the random assortment of bytes we've made into a string, 
+// based on the default alphabet
 fn bytes_to_id(bytes: BitArray, remaining: Int, accumulator: String) -> NanoID {
   case remaining, bytes {
     // We're done, return the finished output
